@@ -1,0 +1,8 @@
+
+Select the picks to be traded away and the picks to be received in return.
+For each entry, provide 1 or more pick numbers from 1-60 as a comma-separated list.
+As an example, to trade the 1st, 3rd, and 25th pick you would enter: 1, 3, 25.
+
+Picks to give away: Picks to receive: 
+Trade result: Don't do it! This trade gives away more value than it receives.
+
