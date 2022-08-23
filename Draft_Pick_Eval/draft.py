@@ -22,8 +22,6 @@ from sklearn.pipeline import make_pipeline
 
 # In[2]:
 # Get the draft picks to give/receive from the user
-# You can assume that this input will be entered as expected
-# DO NOT CHANGE THESE PROMPTS
 print("\nSelect the picks to be traded away and the picks to be received in return.")
 print("For each entry, provide 1 or more pick numbers from 1-60 as a comma-separated list.")
 print("As an example, to trade the 1st, 3rd, and 25th pick you would enter: 1, 3, 25.\n")
@@ -58,26 +56,13 @@ def getID(url_string):
     return(final_id)
 
 
-# In[4]:
-
-
 # Convert data types
 draft_picks['basketball_reference_url'] = draft_picks['basketball_reference_url'].astype(str)
 players['Season'] = players['Season'].astype(str)
 draft_picks['yearDraft'] = draft_picks['yearDraft'].astype(int)
 
-
-# In[5]:
-
-
 # Apply function to get player IDs and drop any NaNs (records without IDs)
 draft_picks['urlID'] = draft_picks['basketball_reference_url'].apply(lambda x: getID(x))
-
-
-# In[6]:
-
-# In[7]:
-
 
 # Only use players drafted between 1979 and 2015. This will ensure we should have 4 years of data on them
 draft_picks = draft_picks[(draft_picks.yearDraft >= 1979) & (draft_picks.yearDraft <= 2015)].reset_index(drop = True)
@@ -85,23 +70,12 @@ draft_picks = draft_picks[(draft_picks.yearDraft >= 1979) & (draft_picks.yearDra
 # Drop any players drafted after the 60th pick for consistency between draft years
 draft_picks = draft_picks[(draft_picks.numberPickOverall <= 60)].reset_index(drop = True)
 
-
-# In[8]:
-
-
-# In[9]:
-
-
 # Subset each players draft year
 draft_years = draft_picks.loc[:,['urlID','yearDraft']].copy()
 
 # Join the draft years in and drop and players which we do not have draft data on
 players = players.merge(draft_years, how = 'left', on = 'urlID')
 players = players.dropna(0,how = 'any',subset=['yearDraft']).reset_index(drop = True)
-
-
-# In[10]:
-
 
 # Create a season start year column to calculate draft year offset
 players['season_start_yr'] = players['Season'].apply(lambda x: int(x[0:4]))
@@ -112,19 +86,11 @@ players['draft_year_offset'] = players['season_start_yr'] - players['yearDraft']
 # Only use players drafted between 1979 and 2015. This will ensure we should have 4 years of data on them
 players = players[(players.yearDraft >= 1979) & (players.yearDraft <= 2015)].reset_index(drop = True)
 
-
-# In[11]:
-
-
 # Merge draft data and season stats together
 df = draft_picks.merge(players, how = 'left', on = ['urlID'])
 
 # Drop any season stats after the player's 4th season
 df = df[(df['draft_year_offset'] <= 3) | (pd.isnull(df).any(1))]
-
-
-# In[12]:
-
 
 # Drop unncessary columns
 cols_to_drop = ['numberRound','numberRoundPick','slugTeam','idPlayer','idTeam','basketball_reference_url'
@@ -132,48 +98,21 @@ cols_to_drop = ['numberRound','numberRoundPick','slugTeam','idPlayer','idTeam','
                ,'DWS', 'WS/48', 'OBPM', 'DBPM', 'BPM', 'VORP','yearDraft_y','Season']
 df = df.drop(cols_to_drop, axis = 1)
 
-
-# In[13]:
-
-
-# In[14]:
-
-
 # Calculate aggregates on each player: Total Win Shares, Age when Drafted, International Flag
 grouped = df.groupby(['namePlayer', 'numberPickOverall']).agg({'WS': ['sum'], 'Age': ['min']}).reset_index(drop = False)
 grouped.columns = ['namePlayer', 'numberPickOverall', 'total_WS', 'draft_age']
 grouped = grouped.reset_index(drop = True)
-
-
-# In[15]:
-
 
 # Calculate the average total WS by draft pick
 wsoav = grouped.groupby(['numberPickOverall']).agg({'total_WS': ['mean']}).reset_index(drop = False)
 wsoav.columns = ['numberPickOverall', 'avg_WS']
 wsoav = wsoav.reset_index(drop = True)
 
-
-# In[16]:
-
-
-# In[17]:
-
-
 X_pick = wsoav['numberPickOverall'].to_numpy().reshape(-1,1)
 Y_pick = wsoav['avg_WS'].to_numpy().reshape(-1,1)
 
 
-# In[18]:
-
-
-X_train, X_test, Y_train, Y_test = train_test_split(X_pick, Y_pick, test_size=0.2, random_state=58)
-
-
-# In[19]:
-
-# In[20]:
-
+X_train, X_test, Y_train, Y_test = train_test_split(X_pick, Y_pick, test_size=0.2, random_state=58
 
 # Alpha (regularization strength) of LASSO regression
 lasso_eps = 0.0001
@@ -187,12 +126,9 @@ test_pred = np.array(model.predict(X_test))
 RMSE=np.sqrt(np.sum(np.square(test_pred-Y_test)))
 test_score = model.score(X_test,Y_test)
 
-# In[21]:
-
 all_picks = np.linspace(1,60,60).reshape(-1,1)
 all_picks_pred = np.array(model.predict(all_picks))
 
-# In[22]:
 
 '''
 x = range(61)
@@ -208,12 +144,7 @@ plt.plot(all_picks, all_picks_pred, color='black', linewidth=2, label = 'Model P
 plt.legend(loc='upper right');
 plt.show()
 '''
-
-# In[23]:
-
-
-# In[24]:
-
+                                                    
 
 def trade_eval(rec,out):
     rec_val = model.predict(np.array(rec).reshape(-1,1)).sum()
@@ -224,14 +155,8 @@ def trade_eval(rec,out):
         return False
     else:
         print("\nTrade result: This trade returns equal value. Consult with the GM.\n")
-
-
-# In[35]:
-
-
-
+                                                    
 # Print feeback on trade
-# DO NOT CHANGE THESE OUTPUT MESSAGES
 if trade_eval(receive_picks, give_picks) == True:
     print("\nTrade result: Success! This trade receives more value than it gives away.\n")
     print("Based on our model, the total value you would receive is: {}".format(str(model.predict(np.array(receive_picks).reshape(-1,1)).sum())))
@@ -240,10 +165,4 @@ else:
     print("\nTrade result: Don't do it! This trade gives away more value than it receives.\n")
     print("Based on our model, the total value you would receive is: " + str(model.predict(np.array(receive_picks).reshape(-1,1)).sum()))
     print("And the total value you would give away is: " + str(model.predict(np.array(give_picks).reshape(-1,1)).sum()))
-
-
-# In[ ]:
-
-
-
 
